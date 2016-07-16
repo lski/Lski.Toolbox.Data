@@ -4,63 +4,94 @@ using System.Data.Common;
 
 namespace Lski.Toolbox.Data.Connections {
 
-    /// <summary>
-    /// Simple class to create a disposible Connection object from a connection string name rather than a connection string. Uses the provider name in the connection string setting to 
-    /// create the appropriate Connection type (e.g. SqlConnection).
-    /// </summary>
-    /// <remarks>
-    /// Simple class to create a disposible Connection object from a connection string name rather than a connection string. Uses the provider name in the connection string setting to 
-    /// create the appropriate Connection type (e.g. SqlConnection).
-    ///
-    /// Recommended usage is to create a sub class, that has a parameterless constructor that calls the parent constructor in this class with the correct connection string name.
-    /// This means that the context can be type safe in the code and not have Magic Strings throughout the solution.
-    ///
-    /// E.g.
-    ///
-    /// <code>
-    /// public class MyContext : BasicConext {
-    ///		public MyContext() : base("MyContext") {}
-    /// }
-    /// </code>
-    /// </remarks>
-    public class BasicContext : IDisposable {
+	/// <summary>
+	/// A simple disposible database connection wrapper, that creates the DbConnection object from a connection string name.
+	/// Where the type is derived from the provider name e.g. System.Data.SqlClient results in an SqlConnection object.
+	/// </summary>
+	/// <remarks>
+	/// A simple disposible database connection wrapper, that creates the DbConnection object from a connection string name.
+	/// Where the type is derived from the provider name e.g. System.Data.SqlClient results in an SqlConnection object.
+	///
+	/// Alternatively you can supply a raw connection string, with its provider name.
+	///
+	/// You can use BasicContext however you want, but the simpliest way is:
+	///
+	/// <code>
+	/// using(var context = new BasicContext("myConnString")) {
+	///		context.Connection.Open();
+	///		// do something
+	/// }
+	/// </code>
+	///
+	///
+	/// There are a couple of recommended ways of using the class though.
+	///
+	/// The first way is to create a sub class, that has a parameterless constructor that calls the parent constructor in this class with the correct connection string name.
+	/// This means that the context can be type safe in the code and not have Magic Strings throughout the solution.
+	///
+	/// E.g.
+	///
+	/// <code>
+	/// public class MyContext : BasicConext {
+	///		public MyContext() : base("MyContext") {}
+	/// }
+	/// </code>
+	///
+	/// The second is to use it along with IBasicContext, with a Dependancy Injection container like Autofac.
+	/// This means it is created from a central point, meaning no magic strings throughout.
+	///
+	/// <code>
+	/// builder.Register(c => new BasicContext("myConnString")).As&lt;IBasicContext&gt;();
+	/// </code>
+	/// </remarks>
+	public class BasicContext : IBasicContext {
 
-        private readonly DbConnection _conn;
+		private readonly DbConnection _conn;
 
-        public BasicContext(string name) {
-            _conn = Connections.Connection.Get(name);
-        }
+		public BasicContext(string name) {
+			_conn = Connections.Connection.Get(name);
+		}
 
-        public BasicContext(DbConnection conn) {
+		public BasicContext(string connentionString, string providerName) {
+			_conn = Connections.Connection.Get(connentionString, providerName);
+		}
 
-            if (conn == null) {
-                throw new ArgumentNullException("conn");
-            }
+		public BasicContext(DbConnection conn) {
 
-            if (String.IsNullOrEmpty(conn.ConnectionString)) {
-                throw new ArgumentException("A connection with a connection string is required");
-            }
+			if (conn == null) {
+				throw new ArgumentNullException(nameof(conn));
+			}
 
-            _conn = conn;
-        }
+			if (String.IsNullOrEmpty(conn.ConnectionString)) {
+				throw new ArgumentException("A connection with a connection string is required");
+			}
 
-        public DbConnection Connection {
-            get {
-                return _conn;
-            }
-        }
+			_conn = conn;
+		}
 
-        public void Dispose() {
+		/// <summary>
+		/// The underlying connection object to use
+		/// </summary>
+		public DbConnection Connection {
+			get {
+				return _conn;
+			}
+		}
 
-            try {
+		/// <summary>
+		/// Disposes of the connection by closing it if the connection is open.
+		/// </summary>
+		public void Dispose() {
 
-                if (_conn != null && _conn.State == ConnectionState.Open) {
-                    _conn.Close();
-                }
-            } 
-            catch {
-                // Stub
-            }
-        }
-    }
+			try {
+
+				if (_conn != null && _conn.State == ConnectionState.Open) {
+					_conn.Close();
+				}
+			}
+			catch {
+				// Stub
+			}
+		}
+	}
 }

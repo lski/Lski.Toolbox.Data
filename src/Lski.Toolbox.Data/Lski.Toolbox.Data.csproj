@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="Connections\BasicContext.cs" />
     <Compile Include="Connections\Connection.cs" />
+    <Compile Include="Connections\IBasicContext.cs" />
     <Compile Include="Connections\Transaction.cs" />
     <Compile Include="Loader\DataLoader.cs" />
     <Compile Include="DataFieldInfo.cs" />

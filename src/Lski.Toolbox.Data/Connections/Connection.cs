@@ -10,29 +10,30 @@ namespace Lski.Toolbox.Data.Connections {
 	/// </summary>
 	public static class Connection {
 
-	    static Connection() {
-	        ConnectionStringSettings = ConfigurationManager.ConnectionStrings;
-	    }
+		static Connection() {
+			ConnectionStringSettings = ConfigurationManager.ConnectionStrings;
+		}
 
-        private static ConnectionStringSettingsCollection ConnectionStringSettings { get; set; }
+		private static ConnectionStringSettingsCollection ConnectionStringSettings { get; set; }
 
-	    private static DbProviderFactory GetFactory(string providerName) {
-	        return DbProviderFactories.GetFactory(providerName);
-	    }
+		private static DbProviderFactory GetFactory(string providerName) {
+			return DbProviderFactories.GetFactory(providerName);
+		}
 
-        /// <summary>
-        /// Creates a DbConnection object from a connection string stored in the connection string settings
-        /// </summary>
-	    public static DbConnection Get(String connectionStringName) {
+		/// <summary>
+		/// Creates a DbConnection object from a connection string stored in the connection string settings
+		/// </summary>
+		/// <param name="connectionStringName">The name of the connection string in the </param>
+		public static DbConnection Get(String connectionStringName) {
 
-            if (String.IsNullOrEmpty(connectionStringName)) {
-                throw new ArgumentException("connectionStringName");
-            }
+			if (String.IsNullOrEmpty(connectionStringName)) {
+				throw new ArgumentException(nameof(connectionStringName));
+			}
 
 			var css = ConnectionStringSettings[connectionStringName];
 
 			if (css == null) {
-				throw new ArgumentException(String.Format("The connection string with the name '{0}' could not be found", connectionStringName));
+				throw new ArgumentException($"The connection string with the name '{connectionStringName}' could not be found");
 			}
 
 			var conn = GetFactory(css.ProviderName).CreateConnection();
@@ -42,25 +43,28 @@ namespace Lski.Toolbox.Data.Connections {
 			return conn;
 		}
 
-        /// <summary>
-        /// Creates a DbConnection object from a raw connection string and a provider name
-        /// </summary>
-        public static DbConnection Get(String connectionString, string providerName) {
+		/// <summary>
+		/// Creates a DbConnection object from a raw connection string and a provider name
+		/// </summary>
+		/// <param name="connectionString">The raw connection string used to connect to the database</param>
+		/// <param name="providerName">The provider name, is the name of the type of connection &amp; e.g. System.Data.SqlClient results in an SqlConnection object</param>
+		public static DbConnection Get(String connectionString, string providerName) {
 
-            if (String.IsNullOrEmpty(connectionString)) {
-                throw new ArgumentException("connectionString");
-            }
+			if (String.IsNullOrEmpty(connectionString)) {
+				throw new ArgumentException(nameof(connectionString));
+			}
 
-            var conn = GetFactory(providerName).CreateConnection();
+			var conn = GetFactory(providerName).CreateConnection();
 
-            conn.ConnectionString = connectionString;
+			conn.ConnectionString = connectionString;
 
-            return conn;
-        }
+			return conn;
+		}
 
 		/// <summary>
 		/// Tries to open the connection object that has been passed, returns true if it implicitily opened the connection or false if it was already open
 		/// </summary>
+		/// <param name="conn">The DbConnection object to open</param>
 		public static bool Open(ref DbConnection conn) {
 
 			var connState = conn.State;
@@ -71,7 +75,7 @@ namespace Lski.Toolbox.Data.Connections {
 
 				// If the connection was mearly broken and not closed, dont state this is implicitly opened
 				if (connState == ConnectionState.Closed) {
-					return true;   
+					return true;
 				}
 			}
 
@@ -81,6 +85,7 @@ namespace Lski.Toolbox.Data.Connections {
 		/// <summary>
 		/// Simple close connection method, only attempts to close if currently open
 		/// </summary>
+		/// <param name="conn">The DbConnection object to close</param>
 		public static void Close(DbConnection conn) {
 
 			if (conn != null && conn.State == ConnectionState.Open) {
@@ -91,6 +96,8 @@ namespace Lski.Toolbox.Data.Connections {
 		/// <summary>
 		/// Close the connection object passed, but only if it is open. Any error messages can be suppressed by setting suppressError to True (there are recorded however)
 		/// </summary>
+		/// <param name="conn">The connection to close</param>
+		/// <param name="suppressError">If true will catch and disgard any errors produced by the </param>
 		public static void Close(DbConnection conn, bool suppressError) {
 
 			if (conn != null && conn.State == ConnectionState.Open) {
@@ -98,10 +105,10 @@ namespace Lski.Toolbox.Data.Connections {
 				if (suppressError) {
 					try {
 						conn.Close();
-					} 
+					}
 					catch (Exception) {
 					}
-				} 
+				}
 				else {
 					conn.Close();
 				}
